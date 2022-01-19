@@ -4,85 +4,84 @@ using PriceCalculator.Core.DiscountRules;
 using PriceCalculator.DataServices;
 using PriceCalculator.Infrastructure;
 
-namespace PriceCalculator.Core
+namespace PriceCalculator.Core;
+
+public interface IShoppingPriceCalculator
 {
-    public interface IShoppingPriceCalculator
+    /// <summary>
+    /// <para> get the shopping list values for the given products, applies and discounts that may be applicable, reports
+    /// any unknown products </para>
+    /// </summary>
+    /// <param name="items"></param>
+    /// <returns></returns>
+    string ShowPriceShoppingList(string[] items);
+}
+
+public class ShoppingPriceCalculator : IShoppingPriceCalculator
+{
+    private readonly IShopContext _shopContext;
+    private readonly IProductService _productService;
+    private readonly IDiscountRulesSource _discountRulesSource;
+
+    public ShoppingPriceCalculator(IShopContext shopContext, IProductService productService,
+        IDiscountRulesSource discountRulesSource)
     {
-        /// <summary>
-        /// <para> get the shopping list values for the given products, applies and discounts that may be applicable, reports
-        /// any unknown products </para>
-        /// </summary>
-        /// <param name="items"></param>
-        /// <returns></returns>
-        string ShowPriceShoppingList(string[] items);
+        _shopContext = shopContext;
+        _productService = productService;
+        _discountRulesSource = discountRulesSource;
     }
 
-    public class ShoppingPriceCalculator : IShoppingPriceCalculator
+    string IShoppingPriceCalculator.ShowPriceShoppingList(string[] items) =>
+        ShowPriceShoppingList(_shopContext, _productService, _discountRulesSource, items);
+
+
+    public static string ShowDiscountedShoppingList(NamedShoppingListAndDiscount discountedShoppingList)
     {
-        private readonly IShopContext _shopContext;
-        private readonly IProductService _productService;
-        private readonly IDiscountRulesSource _discountRulesSource;
+        string FormatPrice(decimal value) =>
+            value >= 1m ? $"£{value:0.00}" : $"{value * 100:0}p"
+        ; // eg £3.10 -10p move out to static class for testing
 
-        public ShoppingPriceCalculator(IShopContext shopContext, IProductService productService,
-            IDiscountRulesSource discountRulesSource)
-        {
-            _shopContext = shopContext;
-            _productService = productService;
-            _discountRulesSource = discountRulesSource;
-        }
+        string FormatPricePounds(decimal value) => $"£{value:0.00}";
 
-        string IShoppingPriceCalculator.ShowPriceShoppingList(string[] items) =>
-            ShowPriceShoppingList(_shopContext, _productService, _discountRulesSource, items);
+        var subTotal = discountedShoppingList.GetSubTotal;
+        var total = discountedShoppingList.GetTotal;
+        var savings = discountedShoppingList.DiscountsSummary
+            .Select(summary => $"{summary.DiscountSummaryText.SummaryText}: {FormatPrice(-summary.Saving)}")
+            .DefaultIfEmpty("(No offers available)");
 
+        var receiptText = discountedShoppingList.DiscountsSummary.Any()
+            ? $"Subtotal: {FormatPricePounds(subTotal)}\n{string.Join("\n", savings)}\nTotal: {FormatPricePounds(total)}\n"
+            : $"Subtotal: {FormatPricePounds(subTotal)}\n{string.Join("\n", savings)}\nTotal price: {FormatPricePounds(total)}\n";
 
-        public static string ShowDiscountedShoppingList(NamedShoppingListAndDiscount discountedShoppingList)
-        {
-            string FormatPrice(decimal value) =>
-                value >= 1m ? $"£{value:0.00}" : $"{value * 100:0}p"
-            ; // eg £3.10 -10p move out to static class for testing
+        return receiptText;
+    }
 
-            string FormatPricePounds(decimal value) => $"£{value:0.00}";
+    public static (ImmutableList<ProductIdentifier> unknownIdentifiers, NamedShoppingListAndDiscount shoppingList)
+        PriceShoppingList(IShopContext shopContext, IProductService productService,
+            IDiscountRulesSource discountRulesSource, string[] cartItemNames)
+    {
+        var (unknowns, shoppingBasket) =
+            productService.GetProductPrices(cartItemNames)
+                .PartitionEithers(); // should be async with IAsyncEnumerable/Task/IObservable and composed, assume in a service
+        var rules = discountRulesSource.GetRules(shopContext); // the date should be injected 
+        return (unknowns,
+            DiscountRuleAggregator.ApplyDiscountsSync(shopContext, rules,
+                shoppingBasket)); // should  be async and composed, assume in a service           
+    }
 
-            var subTotal = discountedShoppingList.GetSubTotal;
-            var total = discountedShoppingList.GetTotal;
-            var savings = discountedShoppingList.DiscountsSummary
-                .Select(summary => $"{summary.DiscountSummaryText.SummaryText}: {FormatPrice(-summary.Saving)}")
-                .DefaultIfEmpty("(No offers available)");
+    public static string ShowPriceShoppingList(IShopContext shopContext, IProductService productService,
+        IDiscountRulesSource discountRulesSource, string[] cartItemsNames)
+    {
+        string PrintUnknownProducts(ImmutableList<ProductIdentifier> unknownProducts) =>
+            $"Unknown products: {string.Join(",", unknownProducts.Select(x => x.ProductName))}\n";
 
-            var receiptText = discountedShoppingList.DiscountsSummary.Any()
-                ? $"Subtotal: {FormatPricePounds(subTotal)}\n{string.Join("\n", savings)}\nTotal: {FormatPricePounds(total)}\n"
-                : $"Subtotal: {FormatPricePounds(subTotal)}\n{string.Join("\n", savings)}\nTotal price: {FormatPricePounds(total)}\n";
-
-            return receiptText;
-        }
-
-        public static (ImmutableList<ProductIdentifier> unknownIdentifiers, NamedShoppingListAndDiscount shoppingList)
-            PriceShoppingList(IShopContext shopContext, IProductService productService,
-                IDiscountRulesSource discountRulesSource, string[] cartItemNames)
-        {
-            var (unknowns, shoppingBasket) =
-                productService.GetProductPrices(cartItemNames)
-                    .PartitionEithers(); // should be async with IAsyncEnumerable/Task/IObservable and composed, assume in a service
-            var rules = discountRulesSource.GetRules(shopContext); // the date should be injected 
-            return (unknowns,
-                DiscountRuleAggregator.ApplyDiscountsSync(shopContext, rules,
-                    shoppingBasket)); // should  be async and composed, assume in a service           
-        }
-
-        public static string ShowPriceShoppingList(IShopContext shopContext, IProductService productService,
-            IDiscountRulesSource discountRulesSource, string[] cartItemsNames)
-        {
-            string PrintUnknownProducts(ImmutableList<ProductIdentifier> unknownProducts) =>
-                $"Unknown products: {string.Join(",", unknownProducts.Select(x => x.ProductName))}\n";
-
-            var (unknowns, discountedShoppingList) =
-                PriceShoppingList(shopContext, productService, discountRulesSource, cartItemsNames);
-            var printout = ShowDiscountedShoppingList(discountedShoppingList);
-            var printoutWithErrors =
-                unknowns.Count > 0
-                    ? $"{printout}\n{PrintUnknownProducts(unknowns)}"
-                    : printout;
-            return printoutWithErrors;
-        }
+        var (unknowns, discountedShoppingList) =
+            PriceShoppingList(shopContext, productService, discountRulesSource, cartItemsNames);
+        var printout = ShowDiscountedShoppingList(discountedShoppingList);
+        var printoutWithErrors =
+            unknowns.Count > 0
+                ? $"{printout}\n{PrintUnknownProducts(unknowns)}"
+                : printout;
+        return printoutWithErrors;
     }
 }
