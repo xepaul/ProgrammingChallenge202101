@@ -1,13 +1,11 @@
 ﻿using System;
 using PriceCalculator.Core;
-using PriceCalculator.Core.DiscountRules;
-namespace PriceCalculator
+namespace PriceCalculator;
+
+class Program
 {
-    class Program
+    static void Main(string[] args) // should really be async
     {
-        static void Main(string[] args) // should really be async
-        {
-            Console.Write(ProgramBootStrapper.ProcessShoppingList(args));
-        }
+        Console.Write(ProgramBootStrapper.ProcessShoppingList(args));
     }
 }
