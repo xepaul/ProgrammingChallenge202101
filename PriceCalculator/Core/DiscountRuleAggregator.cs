@@ -8,17 +8,7 @@ public static class DiscountRuleAggregator
 {
     public static NamedShoppingListAndDiscount ApplyDiscountsSync(IShopContext currentTimeProvider, ImmutableList<DiscountRule> discountRules, ImmutableList<ShoppingCartItem> shoppingList)
     {
-        static NamedShoppingListAndDiscount UpdateDiscount(NamedShoppingListAndDiscount accShoppingDiscount, ShoppingListAndDiscount shoppingListAndDiscount, DiscountRuleIdentity rule) =>
-            accShoppingDiscount with
-            {
-                DiscountedShoppingList =
-                MergeShoppingListWithDiscounts(accShoppingDiscount, shoppingListAndDiscount, rule),
-                AppliedDiscountRules = accShoppingDiscount.AppliedDiscountRules.Add(rule),
-                DiscountsSummary =
-                accShoppingDiscount.DiscountsSummary.AddRange(shoppingListAndDiscount.DiscountsSummary)
-            };
-
-        static ImmutableList<ShoppingCartItem> MergeShoppingListWithDiscounts(NamedShoppingListAndDiscount namedShoppingListAndDiscount, ShoppingListAndDiscount shoppingListAndDiscount,
+      var MergeShoppingListWithDiscounts = static (NamedShoppingListAndDiscount namedShoppingListAndDiscount, ShoppingListAndDiscount shoppingListAndDiscount,
                                                                         DiscountRuleIdentity discountRule) =>
             namedShoppingListAndDiscount.DiscountedShoppingList
                 .Zip(shoppingListAndDiscount.DiscountedShoppingList,
@@ -29,7 +19,16 @@ public static class DiscountRuleAggregator
                                         shoppingCartItem with
                                         { ProductDiscounts = cartItem.ProductDiscounts.Add(new ProductDiscount(discountPrice, discountRule)) }))
                 .ToImmutableList();
-
+        var UpdateDiscount= (NamedShoppingListAndDiscount accShoppingDiscount, ShoppingListAndDiscount shoppingListAndDiscount, DiscountRuleIdentity rule) =>
+            accShoppingDiscount with
+            {
+                DiscountedShoppingList =
+                MergeShoppingListWithDiscounts(accShoppingDiscount, shoppingListAndDiscount, rule),
+                AppliedDiscountRules = accShoppingDiscount.AppliedDiscountRules.Add(rule),
+                DiscountsSummary =
+                accShoppingDiscount.DiscountsSummary.AddRange(shoppingListAndDiscount.DiscountsSummary)
+            };
+        
         return discountRules.Aggregate(
             new NamedShoppingListAndDiscount(shoppingList, ImmutableList<DiscountRuleIdentity>.Empty, ImmutableList<DiscountSummary>.Empty),
             (accShoppingDiscount, rule) =>

@@ -10,7 +10,7 @@ public  class ProductDiscountRule : IDiscountRule
     private  Func<ImmutableList<ShoppingCartItem>, Maybe<ShoppingListAndDiscount>> _tryApplyDiscountRuleFunc;
     private ProductDiscountRule(ProductIdentifier discountedProductIdentifier, decimal discount)
     {
-        _tryApplyDiscountRuleFunc =  cartItems =>
+        _tryApplyDiscountRuleFunc = cartItems =>
         {
             DiscountSummary CreateSummary(decimal totalDiscount) =>
                     new(new DiscountSummaryText($"Apples {discount * 100:0.} % off"), totalDiscount);
