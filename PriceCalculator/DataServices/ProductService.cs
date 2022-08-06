@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Linq;
+using System.Threading.Tasks;
 using PriceCalculator.Core;
 using PriceCalculator.Core.DiscountRules;
 using PriceCalculator.Infrastructure;
@@ -14,7 +15,7 @@ public interface IProductService
     /// </summary>
     /// <param name="productNames"></param>
     /// <returns></returns>
-    ImmutableList<Either<ProductIdentifier, ShoppingCartItem>> GetProductPrices(string[] productNames);
+    ValueTask<ImmutableList<Either<ProductIdentifier, ShoppingCartItem>>> GetProductPrices(string[] productNames);
 }
 
 public class ProductService : IProductService
@@ -37,7 +38,7 @@ public class ProductService : IProductService
     {
     }
 
-    public ImmutableList<Either<ProductIdentifier, ShoppingCartItem>> GetProductPrices(string[] productNames) =>
+    public async ValueTask<ImmutableList<Either<ProductIdentifier, ShoppingCartItem>>> GetProductPrices(string[] productNames) =>
         productNames
             .Select(productName => productName.ToLower())
             .Select(productName => new ProductIdentifier(productName.ToLower()))

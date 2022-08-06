@@ -13,8 +13,8 @@ public class DayEnabledRangeRule : IDiscountRule
         _fromDate = fromDate;
         _daysRunning = daysRunning;
     }
-    public Option<ShoppingListAndDiscount> TryApply(IShopContext timeProvider, ImmutableList<ShoppingCartItem> shoppingCartItems) =>
+    public Maybe<ShoppingListAndDiscount> TryApply(IShopContext timeProvider, ImmutableList<ShoppingCartItem> shoppingCartItems) =>
         timeProvider.ExecutionTime.Date < _fromDate.Date || timeProvider.ExecutionTime.Date > _fromDate.Date.AddDays(_daysRunning) // only apply rule during specified dates should really be aligned to a week, whats the start of the week monday?
-            ? Option<ShoppingListAndDiscount>.None
-            : Option<ShoppingListAndDiscount>.Some(new ShoppingListAndDiscount( ImmutableList<Option<DiscountedPrice>>.Empty,  ImmutableList<DiscountSummary>.Empty));
+            ? Maybe<ShoppingListAndDiscount>.Nothing
+            : Maybe<ShoppingListAndDiscount>.Just(new ShoppingListAndDiscount( ImmutableList<Maybe<DiscountedPrice>>.Empty,  ImmutableList<DiscountSummary>.Empty));
 }

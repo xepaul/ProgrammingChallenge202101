@@ -6,7 +6,7 @@ using PriceCalculator.Core.DiscountRules;
 using Xunit;
 using PriceCalculator.Infrastructure;
 using PriceCalculatorTests.TestingSupport;
-using static PriceCalculator.Infrastructure.Option;
+using static PriceCalculator.Infrastructure.Maybe;
 
 namespace PriceCalculatorTests.Core.DiscountRules;
 
@@ -29,8 +29,8 @@ public class DependentProductDiscountRuleTests
 
         var expectedDiscount = ((DiscountedPrice)new DiscountedPrice.FractionalPercentDiscount(0.5m));
         var expectedDiscounts =
-            Enumerable.Repeat(Some(expectedDiscount), 3)
-            .Concat(Enumerable.Repeat(Option<DiscountedPrice>.None, 8))
+            Enumerable.Repeat(Just(expectedDiscount), 3)
+            .Concat(Enumerable.Repeat(Maybe<DiscountedPrice>.Nothing, 8))
             .ToImmutableList();
 
         var result =
@@ -38,7 +38,7 @@ public class DependentProductDiscountRuleTests
                 new ProductIdentifier(productNameBread), 50)
                 .Bind(r => r.TryApply(mockShopContext, shoppingList));
 
-        AssertOption.SequenceEqual(Some(expectedDiscounts.AsEnumerable()),
+        AssertMaybe.SequenceEqual(Just(expectedDiscounts.AsEnumerable()),
             result.Map(x => x.DiscountedShoppingList.AsEnumerable()));
     }
 }

@@ -1,21 +1,21 @@
 using System;
 using PriceCalculator.Infrastructure;
 using Xunit;
-using static PriceCalculator.Infrastructure.Option;
+using static PriceCalculator.Infrastructure.Maybe;
 namespace PriceCalculatorTests.Infrastructure;
 
-public class OptionExtensionsTests
+public class MaybeExtensionsTests
 {
     [Fact]
-    public void TesFoldWithSome()
+    public void TesFoldWithJust()
     {
-        var a = Some(2);
+        var a = Just(2);
         Assert.Equal(9, a.Fold(7, (seed, value) => seed + value));
     }
     [Fact]
-    public void TesFoldWithNone()
+    public void TesFoldWithNothing()
     {
-        var a = None<int>();
+        var a = Nothing<int>();
         Assert.Equal(7, a.Fold(7, (seed, value) => seed + value));
     }
 }

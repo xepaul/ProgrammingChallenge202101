@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Linq;
+using System.Threading.Tasks;
 using PriceCalculator.Core.DiscountRules;
 using PriceCalculator.DataServices;
 using PriceCalculator.Infrastructure;
@@ -14,7 +15,7 @@ public interface IShoppingPriceCalculator
     /// </summary>
     /// <param name="items"></param>
     /// <returns></returns>
-    string ShowPriceShoppingList(string[] items);
+    ValueTask<string> ShowPriceShoppingList(string[] items);
 }
 
 public class ShoppingPriceCalculator : IShoppingPriceCalculator
@@ -31,7 +32,7 @@ public class ShoppingPriceCalculator : IShoppingPriceCalculator
         _discountRulesSource = discountRulesSource;
     }
 
-    string IShoppingPriceCalculator.ShowPriceShoppingList(string[] items) =>
+    ValueTask<string> IShoppingPriceCalculator.ShowPriceShoppingList(string[] items) =>
         ShowPriceShoppingList(_shopContext, _productService, _discountRulesSource, items);
 
 
@@ -56,27 +57,25 @@ public class ShoppingPriceCalculator : IShoppingPriceCalculator
         return receiptText;
     }
 
-    public static (ImmutableList<ProductIdentifier> unknownIdentifiers, NamedShoppingListAndDiscount shoppingList)
+    public static async ValueTask<(ImmutableList<ProductIdentifier> unknownIdentifiers, NamedShoppingListAndDiscount shoppingList)>
         PriceShoppingList(IShopContext shopContext, IProductService productService,
             IDiscountRulesSource discountRulesSource, string[] cartItemNames)
     {
         var (unknowns, shoppingBasket) =
-            productService.GetProductPrices(cartItemNames)
-                .PartitionEithers(); // should be async with IAsyncEnumerable/Task/IObservable and composed, assume in a service
+            await productService.GetProductPrices(cartItemNames).Map(m=>m.PartitionEithers()); 
         var rules = discountRulesSource.GetRules(shopContext); // the date should be injected 
         return (unknowns,
-            DiscountRuleAggregator.ApplyDiscountsSync(shopContext, rules,
-                shoppingBasket)); // should  be async and composed, assume in a service           
+            DiscountRuleAggregator.ApplyDiscountsSync(shopContext, rules, shoppingBasket));          
     }
 
-    public static string ShowPriceShoppingList(IShopContext shopContext, IProductService productService,
+    public static async ValueTask<string> ShowPriceShoppingList(IShopContext shopContext, IProductService productService,
         IDiscountRulesSource discountRulesSource, string[] cartItemsNames)
     {
         string PrintUnknownProducts(ImmutableList<ProductIdentifier> unknownProducts) =>
             $"Unknown products: {string.Join(",", unknownProducts.Select(x => x.ProductName))}\n";
 
         var (unknowns, discountedShoppingList) =
-            PriceShoppingList(shopContext, productService, discountRulesSource, cartItemsNames);
+            await PriceShoppingList(shopContext, productService, discountRulesSource, cartItemsNames);
         var printout = ShowDiscountedShoppingList(discountedShoppingList);
         var printoutWithErrors =
             unknowns.Count > 0

@@ -7,7 +7,7 @@ using PriceCalculator.Core.DiscountRules;
 using Xunit;
 using PriceCalculator.Infrastructure;
 using PriceCalculatorTests.TestingSupport;
-using static PriceCalculator.Infrastructure.Option;
+using static PriceCalculator.Infrastructure.Maybe;
 
 
 namespace PriceCalculatorTests.Core.DiscountRules;
@@ -31,15 +31,15 @@ public class ProductDiscountRuleTests
         var mockShopContext = new MockShopContext(() => throw new NotImplementedException());
 
         var expectedDiscounts =
-            Enumerable.Repeat(Some((DiscountedPrice)new DiscountedPrice.FractionalPercentDiscount(0.5m)), 4)
-                .Concat(Enumerable.Repeat(Option<DiscountedPrice>.None, 7))
+            Enumerable.Repeat(Just((DiscountedPrice)new DiscountedPrice.FractionalPercentDiscount(0.5m)), 4)
+                .Concat(Enumerable.Repeat(Maybe<DiscountedPrice>.Nothing, 7))
                 .ToImmutableList();
 
         var result =
             ProductDiscountRule.TryCreate(new ProductIdentifier(productNameApple), 50)
                 .Bind(r => r.TryApply(mockShopContext, shoppingList));
 
-        AssertOption.SequenceEqual(Some(expectedDiscounts.AsEnumerable()),
+        AssertMaybe.SequenceEqual(Just(expectedDiscounts.AsEnumerable()),
             result.Map(x => x.DiscountedShoppingList.AsEnumerable()));
     }
 }

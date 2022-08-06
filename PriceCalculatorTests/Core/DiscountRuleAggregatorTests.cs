@@ -4,7 +4,7 @@ using System.Linq;
 using PriceCalculator.Core;
 using PriceCalculator.Core.DiscountRules;
 using PriceCalculator.Infrastructure;
-using static PriceCalculator.Infrastructure.Option;
+using static PriceCalculator.Infrastructure.Maybe;
 using Xunit;
 
 namespace PriceCalculatorTests.Core;
@@ -35,9 +35,9 @@ public class DiscountRuleAggregatorTests
         var expectedTotal = 0.8m * 3m * 0.5m + 0.8m + 0.65m * 7;
         var expectedSubTotal = 0.8m * 4m + 0.65m * 7;
         var expectedMultiBuyDiscount = 0.8m * 3m * 0.5m;
-        Assert.Equal(Some(expectedSubTotal), result.Map(r => r.GetSubTotal));
-        Assert.Equal(Some(expectedTotal), result.Map(r => r.GetTotal));
-        Assert.Equal(Some(expectedMultiBuyDiscount), result.Map(r => r.DiscountsSummary[0].Saving));
-        Assert.Equal(Some(1), result.Map(r => r.DiscountsSummary.Count));
+        Assert.Equal(Just(expectedSubTotal), result.Map(r => r.GetSubTotal));
+        Assert.Equal(Just(expectedTotal), result.Map(r => r.GetTotal));
+        Assert.Equal(Just(expectedMultiBuyDiscount), result.Map(r => r.DiscountsSummary[0].Saving));
+        Assert.Equal(Just(1), result.Map(r => r.DiscountsSummary.Count));
     }
 }
