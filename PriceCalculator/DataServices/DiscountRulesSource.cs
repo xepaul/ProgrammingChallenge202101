@@ -50,7 +50,7 @@ public class DiscountRulesSource : IDiscountRulesSource
 
     public ImmutableList<DiscountRule> GetRules(IShopContext shopContext)
     {
-        bool IsActiveRule(DiscountRuleActivation activation) =>
+        var  IsActiveRule = (DiscountRuleActivation activation) =>
             activation.ActiveDateRange switch
             {
                 ActiveDateRange.AlwaysActive => true,

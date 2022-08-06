@@ -14,6 +14,7 @@ public class MaybeTTests
 
     [Fact]
     public void TestMaybeJustIsJustTrue() => Assert.True(Maybe.Just(2).IsJust);
+    [Fact]
     public void TestMaybeJustIsNothingFalse() => Assert.False(Maybe.Just(2).IsNothing);
     [Fact]
     public void TestMaybeNothingIsNothingTrue() => Assert.True(Maybe<int>.Nothing.IsNothing);

@@ -12,8 +12,8 @@ public class DependentProductDiscountRule : IDiscountRule
     {
         _tryApplyDiscountRuleFunc = cartItems =>
        {
-           DiscountSummary CreateSummary(decimal totalDiscount) =>  // need to fix message with pluralization and quantity type -> Buy 2 cans of Bean and get a loaf of bread for half price
-               new(new DiscountSummaryText(
+           var CreateSummary =  (decimal totalDiscount) =>  // need to fix message with pluralization and quantity type -> Buy 2 cans of Bean and get a loaf of bread for half price
+               new DiscountSummary(new DiscountSummaryText(
                        $"Buy {activatingProductCount} items of {activatingProductIdentifier.ProductName}  get {dependentProductIdentifier.ProductName} for {dependentFractionalPercentDiscount * 100:0.} % off"),
                    totalDiscount);
 
