@@ -11,6 +11,6 @@ public interface IDiscountRule
     /// <param name="timeProvider"></param>
     /// <param name="shoppingCartItems"></param>
     /// <returns></returns>
-    Option<ShoppingListAndDiscount> TryApply(IShopContext timeProvider, ImmutableList<ShoppingCartItem> shoppingCartItems);
+    Maybe<ShoppingListAndDiscount> TryApply(IShopContext timeProvider, ImmutableList<ShoppingCartItem> shoppingCartItems);
 }
  

@@ -2,21 +2,21 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using static PriceCalculator.Infrastructure.Option;
+using static PriceCalculator.Infrastructure.Maybe;
 namespace PriceCalculator.Infrastructure;
 
 public static class EnumerableExtensions
 {
-    public static Option<int> TryFindIndex<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+    public static Maybe<int> TryFindIndex<T>(this IEnumerable<T> source, Func<T, bool> predicate)
     {
         using var enumerable = source.GetEnumerator();
-        var result = Option<int>.None;
+        var result = Maybe<int>.Nothing;
         var index = 0;
-        while (Option.IsNone(result) && enumerable.MoveNext())
+        while (Maybe.IsNothing(result) && enumerable.MoveNext())
         {
             var current = enumerable.Current;
             if (predicate(current))
-                result = Option<int>.Some(index);
+                result = Maybe<int>.Just(index);
             index++;
         }
 
@@ -28,18 +28,18 @@ public static class EnumerableExtensions
     /// <para> Fused Select/Map and Where/Filter</para>
     /// </summary>
     /// <param name="source">The input sequence of type T.</param>
-    /// <param name="mapper">A function to transform items of type T into options of type U.</param>
+    /// <param name="mapper">A function to transform items of type T into maybes of type U.</param>
     /// <typeparam name="TResult">result element type</typeparam>
     /// <typeparam name="T">source element type</typeparam>
     /// <returns>The result sequence.</returns>
-    public static IEnumerable<TResult> MapOption<T, TResult>(this IEnumerable<T> source, Func<T, Option<TResult>> mapper)
+    public static IEnumerable<TResult> MapMaybe<T, TResult>(this IEnumerable<T> source, Func<T, Maybe<TResult>> mapper)
     {
         using var enumerator = source.GetEnumerator();
         while (enumerator.MoveNext())
         {
             var result = mapper(enumerator.Current);
-            if (result.IsSome)
-                yield return result.option(value => value, () => throw new Exception("can't happen!"));
+            if (result.IsJust)
+                yield return result.maybe(value => value, () => throw new Exception("can't happen!"));
         }
     }
     /// <summary>
@@ -50,15 +50,15 @@ public static class EnumerableExtensions
     /// <param name="predicate">A function that evaluates to a Boolean when given an item in the sequence.</param>
     /// <typeparam name="T">sequence element type</typeparam>
     /// <returns>The found element or None.</returns>
-    public static Option<T> TryFind<T>(this IEnumerable<T> source1, Func<T, bool> predicate)
+    public static Maybe<T> TryFind<T>(this IEnumerable<T> source1, Func<T, bool> predicate)
     {
         using var enumerator = source1.GetEnumerator();
-        var result = Option<T>.None;
-        while (Option.IsNone(result) && enumerator.MoveNext())
+        var result = Maybe<T>.Nothing;
+        while (Maybe.IsNothing(result) && enumerator.MoveNext())
         {
             var value = enumerator.Current;
             if (predicate(value))
-                result = Some(value);
+                result = Just(value);
         }
         return result;
     }

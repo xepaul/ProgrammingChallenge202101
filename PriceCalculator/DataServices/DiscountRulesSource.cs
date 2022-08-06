@@ -4,7 +4,7 @@ using System.Linq;
 using PriceCalculator.Core;
 using PriceCalculator.Core.DiscountRules;
 using PriceCalculator.Infrastructure;
-using static PriceCalculator.Infrastructure.Option;
+using static PriceCalculator.Infrastructure.Maybe;
 
 namespace PriceCalculator.DataServices;
 
@@ -44,7 +44,7 @@ public class DiscountRulesSource : IDiscountRulesSource
         _discountRules =
             new[] { appleDiscount,
                         breadDiscount}
-                .MapOption(rule => rule)
+                .MapMaybe(rule => rule)
                 .ToImmutableList();
     }
 

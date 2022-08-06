@@ -8,7 +8,7 @@ public static class DiscountRuleAggregator
 {
     public static NamedShoppingListAndDiscount ApplyDiscountsSync(IShopContext currentTimeProvider, ImmutableList<DiscountRule> discountRules, ImmutableList<ShoppingCartItem> shoppingList)
     {
-        NamedShoppingListAndDiscount UpdateDiscount(NamedShoppingListAndDiscount accShoppingDiscount, ShoppingListAndDiscount shoppingListAndDiscount, DiscountRuleIdentity rule) =>
+        static NamedShoppingListAndDiscount UpdateDiscount(NamedShoppingListAndDiscount accShoppingDiscount, ShoppingListAndDiscount shoppingListAndDiscount, DiscountRuleIdentity rule) =>
             accShoppingDiscount with
             {
                 DiscountedShoppingList =
@@ -18,7 +18,7 @@ public static class DiscountRuleAggregator
                 accShoppingDiscount.DiscountsSummary.AddRange(shoppingListAndDiscount.DiscountsSummary)
             };
 
-        ImmutableList<ShoppingCartItem> MergeShoppingListWithDiscounts(NamedShoppingListAndDiscount namedShoppingListAndDiscount, ShoppingListAndDiscount shoppingListAndDiscount,
+        static ImmutableList<ShoppingCartItem> MergeShoppingListWithDiscounts(NamedShoppingListAndDiscount namedShoppingListAndDiscount, ShoppingListAndDiscount shoppingListAndDiscount,
                                                                         DiscountRuleIdentity discountRule) =>
             namedShoppingListAndDiscount.DiscountedShoppingList
                 .Zip(shoppingListAndDiscount.DiscountedShoppingList,

@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Autofac;
 using PriceCalculator.Core.DiscountRules;
 using PriceCalculator.DataServices;
@@ -6,7 +7,7 @@ namespace PriceCalculator.Core;
 
 public static class ProgramBootStrapper
 {
-    public static string ProcessShoppingList(string[] cartItemNames)
+    public static ValueTask<string> ProcessShoppingList(string[] cartItemNames)
     {
         T SetupContainerAndResolve<T>()
         {

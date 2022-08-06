@@ -6,7 +6,7 @@ using PriceCalculator.Infrastructure;
 namespace PriceCalculator.Core.DiscountRules;
 public class DependentProductDiscountRule : IDiscountRule
 {
-    private readonly Func<ImmutableList<ShoppingCartItem>, Option<ShoppingListAndDiscount>> _tryApplyDiscountRuleFunc;
+    private readonly Func<ImmutableList<ShoppingCartItem>, Maybe<ShoppingListAndDiscount>> _tryApplyDiscountRuleFunc;
 
     private DependentProductDiscountRule(uint activatingProductCount, ProductIdentifier activatingProductIdentifier, ProductIdentifier dependentProductIdentifier, decimal dependentFractionalPercentDiscount) // private ctor
     {
@@ -23,28 +23,28 @@ public class DependentProductDiscountRule : IDiscountRule
            {
                var dependentProductsToChange = matchingProductsCount / activatingProductCount;
                var updated =
-                   cartItems.Aggregate((Shopping: ImmutableList<Option<DiscountedPrice>>.Empty, AppliedCount: 0),
+                   cartItems.Aggregate((Shopping: ImmutableList<Maybe<DiscountedPrice>>.Empty, AppliedCount: 0),
                            (acc, item) =>
                                item.ProductIdentifier == dependentProductIdentifier && acc.AppliedCount < dependentProductsToChange
-                                   ? (acc.Shopping.Add(Option.Some((DiscountedPrice)new DiscountedPrice.FractionalPercentDiscount(dependentFractionalPercentDiscount))), acc.AppliedCount + 1)
-                                   : (acc.Shopping.Add(Option<DiscountedPrice>.None), acc.AppliedCount))
+                                   ? (acc.Shopping.Add(Maybe.Just((DiscountedPrice)new DiscountedPrice.FractionalPercentDiscount(dependentFractionalPercentDiscount))), acc.AppliedCount + 1)
+                                   : (acc.Shopping.Add(Maybe<DiscountedPrice>.Nothing), acc.AppliedCount))
                        .Shopping;
                return cartItems.TryFind(cartItem => cartItem.ProductIdentifier == dependentProductIdentifier)
                    .Map(dependentItem => dependentItem.Price.ToPounds() * dependentProductsToChange * dependentFractionalPercentDiscount)
                    .Map(totalDiscount => new ShoppingListAndDiscount(updated, ImmutableList.Create(CreateSummary(totalDiscount))));
            }
            else
-               return Option<ShoppingListAndDiscount>.None;
+               return Maybe<ShoppingListAndDiscount>.Nothing;
        };
     }
 
-    Option<ShoppingListAndDiscount> IDiscountRule.TryApply(IShopContext timeProvider,
+    Maybe<ShoppingListAndDiscount> IDiscountRule.TryApply(IShopContext timeProvider,
         ImmutableList<ShoppingCartItem> cartItems) => _tryApplyDiscountRuleFunc(cartItems);
 
-    public static Option<IDiscountRule> TryCreate(uint activatingProductCount, ProductIdentifier activatingProductIdentifier,
+    public static Maybe<IDiscountRule> TryCreate(uint activatingProductCount, ProductIdentifier activatingProductIdentifier,
         ProductIdentifier dependentProductIdentifier, byte percentDiscount) =>
         //should log any failures somewhere
         activatingProductCount < 1 || percentDiscount > 100
-            ? Option<IDiscountRule>.None // should be returning a Result<DependentProductDiscount,FailureReason> with reason creation failed type Result<'s,'e> = | Ok of 's | Error of 'e
-            : Option.Some((IDiscountRule)new DependentProductDiscountRule(activatingProductCount, activatingProductIdentifier, dependentProductIdentifier, percentDiscount / 100m));
+            ? Maybe<IDiscountRule>.Nothing // should be returning a Result<DependentProductDiscount,FailureReason> with reason creation failed type Result<'s,'e> = | Ok of 's | Error of 'e
+            : Maybe.Just((IDiscountRule)new DependentProductDiscountRule(activatingProductCount, activatingProductIdentifier, dependentProductIdentifier, percentDiscount / 100m));
 }
