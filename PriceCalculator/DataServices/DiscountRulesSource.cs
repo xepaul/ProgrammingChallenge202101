@@ -4,7 +4,6 @@ using System.Linq;
 using PriceCalculator.Core;
 using PriceCalculator.Core.DiscountRules;
 using PriceCalculator.Infrastructure;
-using static PriceCalculator.Infrastructure.Maybe;
 
 namespace PriceCalculator.DataServices;
 
@@ -27,10 +26,10 @@ public class DiscountRulesSource : IDiscountRulesSource
      */
     readonly ImmutableList<DiscountRuleActivation> _discountRules;
 
-    public DiscountRulesSource()
+    public DiscountRulesSource(IShopContext shopContext)
     {
         // these rules would likely be defined in a simple DSL/service built via provided primitives
-        var dateOfThisWeek = DateTimeOffset.Now; // this should be injected
+        var dateOfThisWeek = shopContext.ExecutionTime; // DateTimeOffset.Now; // this should be injected
 
         var appleDiscount =
             ProductDiscountRule.TryCreate(new ProductIdentifier("apple"), 10)
